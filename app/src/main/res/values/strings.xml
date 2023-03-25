@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">AstonIntensive3</string>
+    <string name="todo" translatable="false">TODO</string>
+    <string name="austria">Австрия</string>
+    <string name="poland">Польша</string>
+    <string name="italy">Италия</string>
+    <string name="columbia">Колумбия</string>
+    <string name="madagaskar">Мадагаскар</string>
+    <string name="thailand">Таиланд</string>
+    <string name="denmark">Дания</string>
+    <string name="switzerland">Швейцария</string>
 </resources>
