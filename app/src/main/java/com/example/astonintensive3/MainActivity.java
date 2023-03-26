@@ -8,14 +8,14 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-
-import com.example.astonintensive3.databinding.ActivityMainBinding;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -25,18 +25,21 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
-    private ActivityMainBinding binding;
+    ImageView imageView;
+    EditText inputText;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        setContentView(R.layout.activity_main);
 
-        binding.imputText.setOnEditorActionListener((textView, actionId, keyEvent) -> {
+        imageView = findViewById(R.id.img);
+        inputText = findViewById(R.id.imput_text);
+
+        inputText.setOnEditorActionListener((textView, actionId, keyEvent) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 try {
-                    String url = Objects.requireNonNull(binding.imputText.getText()).toString();
+                    String url = Objects.requireNonNull(inputText.getText()).toString();
                     getImageFromNet(url);
                     hideKeyboard(textView);
                 } catch (Exception e) {
@@ -76,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showErrorPlaceholder() {
-        binding.img.setImageResource(R.drawable.error);
+        imageView.setImageResource(R.drawable.error);
     }
 
     private void hideKeyboard(@NonNull TextView view) {
@@ -102,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
                     showErrorOnUiThread();
                 }
                 handler.post(() -> {
-                    binding.img.setImageBitmap(image);
+                    imageView.setImageBitmap(image);
                 });
             } catch (Exception e) {
                 showErrorOnUiThread();
