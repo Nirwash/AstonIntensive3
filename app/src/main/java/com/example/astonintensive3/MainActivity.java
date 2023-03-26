@@ -33,11 +33,7 @@ public class MainActivity extends AppCompatActivity {
                     getImageFromPicasso(url);
                     hideKeyboard(textView);
                 } catch (Exception e) {
-                    Toast.makeText(
-                            getApplicationContext(),
-                            "Oops, something wrong. Please enter a link.",
-                            Toast.LENGTH_SHORT
-                    ).show();
+                    showError();
                 }
                 return true;
             }
@@ -52,17 +48,29 @@ public class MainActivity extends AppCompatActivity {
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
+    private void showError() {
+        showToast();
+        showErrorPlaceholder();
+    }
+
+    private void showToast() {
+        Toast.makeText(
+                getApplicationContext(),
+                "Oops, something wrong. Please enter another link.",
+                Toast.LENGTH_SHORT
+        ).show();
+    }
+
+    private void showErrorPlaceholder() {
+        binding.img.setImageResource(R.drawable.error);
+    }
+
     private void getImageFromPicasso(String url) {
         Picasso.Builder builder = new Picasso.Builder(getApplicationContext());
         builder.listener(new Picasso.Listener() {
             @Override
             public void onImageLoadFailed(Picasso picasso, Uri uri, Exception exception) {
-                Toast.makeText(
-                        getApplicationContext(),
-                        "Oops, something wrong. Please enter another link.",
-                        Toast.LENGTH_SHORT
-                ).show();
-                binding.img.setImageResource(R.drawable.error);
+                showError();
             }
         });
         Picasso picasso = builder.build();
