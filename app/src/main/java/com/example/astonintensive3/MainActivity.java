@@ -1,8 +1,11 @@
 package com.example.astonintensive3;
 
 import android.content.Context;
-import android.net.Uri;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
@@ -13,9 +16,13 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.astonintensive3.databinding.ActivityMainBinding;
-import com.squareup.picasso.Picasso;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
@@ -30,14 +37,10 @@ public class MainActivity extends AppCompatActivity {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 try {
                     String url = Objects.requireNonNull(binding.imputText.getText()).toString();
-                    getImageFromPicasso(url);
+                    getImageFromNet(url);
                     hideKeyboard(textView);
                 } catch (Exception e) {
-                    Toast.makeText(
-                            getApplicationContext(),
-                            "Oops, something wrong. Please enter a link.",
-                            Toast.LENGTH_SHORT
-                    ).show();
+                    showError();
                 }
                 return true;
             }
@@ -46,30 +49,64 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void showError() {
+        showToast();
+        showErrorPlaceholder();
+    }
+
+    private void showErrorOnUiThread() {
+        Thread thread = new Thread() {
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        showError();
+                    }
+                });
+            }
+        };
+        thread.start();
+    }
+
+    private void showToast() {
+        Toast.makeText(
+                getApplicationContext(),
+                "Oops, something wrong. Please enter another link.",
+                Toast.LENGTH_SHORT
+        ).show();
+    }
+
+    private void showErrorPlaceholder() {
+        binding.img.setImageResource(R.drawable.error);
+    }
+
     private void hideKeyboard(@NonNull TextView view) {
         InputMethodManager imm = (InputMethodManager) view.getContext()
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
-    private void getImageFromPicasso(String url) {
-        Picasso.Builder builder = new Picasso.Builder(getApplicationContext());
-        builder.listener(new Picasso.Listener() {
-            @Override
-            public void onImageLoadFailed(Picasso picasso, Uri uri, Exception exception) {
-                Toast.makeText(
-                        getApplicationContext(),
-                        "Oops, something wrong. Please enter another link.",
-                        Toast.LENGTH_SHORT
-                ).show();
-                binding.img.setImageResource(R.drawable.error);
+    private void getImageFromNet(String url) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+        executor.execute(() -> {
+            try {
+                URL imageUrl = new URL(url);
+                HttpURLConnection connection = (HttpURLConnection) imageUrl.openConnection();
+                connection.setConnectTimeout(30000);
+                connection.setReadTimeout(30000);
+                connection.setInstanceFollowRedirects(true);
+                InputStream inputStream = connection.getInputStream();
+                Bitmap image = BitmapFactory.decodeStream(inputStream);
+                inputStream.close();
+                if (image.getByteCount() == 0) {
+                    showErrorOnUiThread();
+                }
+                handler.post(() -> {
+                    binding.img.setImageBitmap(image);
+                });
+            } catch (Exception e) {
+                showErrorOnUiThread();
             }
         });
-        Picasso picasso = builder.build();
-        picasso.load(url)
-                .centerCrop()
-                .resize(720, 1080)
-                .placeholder(R.drawable.placeholder)
-                .into(binding.img);
     }
 }
